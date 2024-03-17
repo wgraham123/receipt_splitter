@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <assert.h>
-#include <ReceiptLoader.h>
+#include <Receipt.h>
 
-void TestStreq()
+void TestStringEquals()
 {
-    assert(Streq("abc", "abc") == true);
-    assert(Streq("!@£$^&*()_+", "~<>?:|{}") == false);
+    assert(StringEquals("abc", "abc") == true);
+    assert(StringEquals("!@£$^&*()_+", "~<>?:|{}") == false);
 
-    assert(Streq("", "") == true);
+    assert(StringEquals("", "") == true);
     return;
 }
 
@@ -37,16 +37,23 @@ void TestIsStinkyChar()
 
 void TestCleanLine()
 {
-    assert(Streq(CleanLine("abc123"), "abc123"));
-    assert(Streq(CleanLine("\n a \xE2 b \x80 c \xA0"), " a  b  c "));
+    char a[] = "abc";
+    CleanLine(a);
+    assert(StringEquals(a, "abc"));
 
-    assert(Streq(CleanLine(""), ""));
+    char b[] = "\n a \xE2 b \x80 c \xA0";
+    CleanLine(b);
+    assert(StringEquals(b, " a  b  c "));
+
+    char c[] = "";
+    CleanLine(c);
+    assert(StringEquals(c, ""));
     return;
 }
 
 int main()
 {
-    TestStreq();
+    TestStringEquals();
     TestIsStinkyChar();
     TestCleanLine();
 

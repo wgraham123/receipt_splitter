@@ -1,21 +1,14 @@
-#include <ReceiptLoader.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <Receipt.h>
+#include <Models.h>
 
 int main(int argc, char** argv){
 
     if (argc == 2) {
-        char** content;
-        content = ReadReceipt(argv[1]);
-
-        int i = 0;
-        while (content[i]){
-            printf("%s\n", content[i]);
-            free(content[i]);
-            i += 1;
-        }
-
-        free(content);
+        Receipt *receipt = LoadReceipt(argv[1]);
+        if (receipt == NULL)
+            exit(EXIT_FAILURE);
         return 0;
     }
 
