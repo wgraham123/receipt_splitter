@@ -2,181 +2,231 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
 #include <Models.h>
 
-bool IsStinkyChar(char c)
+void FreeReceiptData(char **receipt_data)
 {
-    if (c < 32 || c > 127) 
-        return true;
+    if (receipt_data == NULL)
+        return;
 
-    return false;
+    for (size_t i = 0; receipt_data[i] != NULL; i++)
+        free(receipt_data[i]);
+    free(receipt_data);
+    
+    return;
 }
 
-bool CleanLine(char *dirty_line)
+bool CleanString(char **dirty_string)
 {
+    printf("[LOG] - Entering CleanString()\n");
+    printf("[LOG] - dirty_string = %s\n", (*dirty_string));
 
-    if (dirty_line == NULL)
+    if ((*dirty_string) == NULL){
+        printf("[ERROR] - dirty_string = %s\n", (*dirty_string));
         return false;
-
-    int clean_line_idx = 0;
-    for (int i = 0; dirty_line[i] != '\0'; i++)
-    {
-        if (!IsStinkyChar(dirty_line[i])){
-            dirty_line[clean_line_idx] = dirty_line[i];
-            clean_line_idx++;
-        }
     }
 
-    dirty_line[clean_line_idx] = '\0';
+    size_t dirty_len = strlen((*dirty_string));
+    printf("[LOG] - dirty_len = %zu\n", dirty_len);
 
-    return true;
-}
+    // find first clean char that's not a space
+    size_t str_start_idx = 0;
+    for (size_t i = 0; ((*dirty_string)[i] < 33 || (*dirty_string)[i] > 126) && i < dirty_len; i++)
+        str_start_idx = i;
 
-bool StringEquals(char *str1, char *str2)
-{
+    // find final clean char that's not a space
+    size_t str_end_idx = dirty_len - 1;
+    for (size_t i = dirty_len - 1; ((*dirty_string)[i] < 33 || (*dirty_string)[i] > 126) && i > -1; i--)
+        str_end_idx = i;
 
-    if (str1 == NULL || str2 == NULL)
-        return NULL;
+    if (str_end_idx < str_start_idx)
+        str_end_idx = str_start_idx;
 
-    if (strlen(str1) != strlen(str2))
-        return false;
+    printf("[LOG] - str_start_idx = %zu\n", str_start_idx);
+    printf("[LOG] - str_end_idx = %zu\n", str_end_idx);
 
-    for (int i = 0; i < strlen(str1); i++)
+    // count clean chars between str_start_idx and str_end_idx
+    size_t clean_len = 0;
+    for (size_t i = str_start_idx; i < str_end_idx; i++)
+        if ((*dirty_string)[i] > 31 && (*dirty_string)[i] < 127)
+            clean_len += 1;
+
+    printf("[LOG] - clean_len = %zu\n", clean_len);
+
+    // allocate some memory for clean_len + 1 chars
+    char *clean_string = (char *)malloc((clean_len + 1) * sizeof(char));
+    if (clean_string == NULL)
     {
-        if (str1[i] != str2[i])
-            return false;
+        printf("[ERROR] - Failed to allocate memory to clean_string\n");
+        return false;
     }
 
-    return true;
-}
-
-bool CleanData(char **clean_data, char **email_content, int *num_clean_lines)
-{
-    const unsigned EMAIL_LINES = *num_clean_lines;
-
-    int clean_line_idx = 0;
-    for (int i = 0; i < EMAIL_LINES; i++)
+    // fill clean_string with the clean chars from dirty_string
+    size_t clean_idx = 0;
+    for (size_t i = str_start_idx; i < str_end_idx; i++)
     {
-        // clean line in place
-        if(!CleanLine(email_content[i]))
-            return false;
-
-        if (StringEquals(email_content[i], "Payment details"))
-            break;
-
-        // if the cleaned line has some content, add to clean data
-        if (strlen(email_content[i]) > 0)
+        if ((*dirty_string)[i] > 31 && (*dirty_string)[i] < 127)
         {
-            clean_data[clean_line_idx] = (char *)malloc((strlen(email_content[i]) + 1) * sizeof(char));
-            strcpy(clean_data[clean_line_idx], email_content[i]);
-            clean_line_idx += 1;
+            clean_string[clean_idx] = (*dirty_string)[i];
+            clean_idx += 1;
         }
     }
 
-    *num_clean_lines = clean_line_idx;
+    printf("[LOG] - clean_string = %s\n", clean_string);
+
+    if (clean_string[clean_len + 1] != '\0')
+    {
+        printf("[ERROR] - clean_line overflow\n");
+        return false;
+    }
+
+    // store dirty_string pointer in temp pointer
+    char *temp = (*dirty_string);
+
+    //point dirty_string at clean_string
+    (*dirty_string) = clean_string;
+
+    // free memory pointed at by temp pointer
+    free(temp);
+
+    printf("[LOG] - dirty_string = %s\n", (*dirty_string));
+    printf("[LOG] - Leaving CleanString()\n");
     return true;
 }
 
-bool ReadData(char **email_content, const char *path, const unsigned MAX_EMAIL_LINES)
+bool CleanData(char ***receipt_data)
 {
-    const unsigned MAX_LINE_BYTES = 5000;
+    printf("[LOG] - Entered CleanData()\n");
+    // Count how many elements are in the receipt_data array
+    size_t num_strings = 0;
+    for (size_t i = 0; (*receipt_data)[i] != NULL; i++)
+        num_strings = i;
+    
+    if (num_strings == 0)
+    {
+        printf("[ERROR] - num_strings = %zu\n", num_strings);
+        return false;
+    }
+
+    // Clean each string in receipt data
+    for (size_t i = 0; i < num_strings; i++){
+        CleanString(&((*receipt_data)[i]));
+    }
+
+    // resize receipt_data, leaving out any strings with no useful data
+    size_t num_valid_strings = 0;
+    for (size_t i = 0; (*receipt_data)[i] != NULL; i++)
+        if (strlen((*receipt_data)[i]) != 0)
+            num_valid_strings += 1;
+
+    char **clean_data = (char **)malloc((1 + num_valid_strings) * sizeof(char *));
+    if (clean_data == NULL){
+        printf("[ERROR] - Failed to allocate memory for clean_data\n");
+        return false;
+    }
+
+    size_t clean_data_idx = 0;
+    for (size_t i = 0; (*receipt_data)[i] != NULL; i++)
+    {
+        size_t string_length = strlen((*receipt_data)[i]);
+        if (string_length != 0)
+        {
+            clean_data[clean_data_idx] = (char *)malloc((1 + string_length) * sizeof(char));
+            if (clean_data[clean_data_idx] == NULL)
+            {
+                printf("[ERROR] - Failed to allocate memory for clean_data[%zu]\n", clean_data_idx);
+                return false;
+            }
+            for (size_t j = 0; j < string_length; j++)
+                clean_data[clean_data_idx][j] = (*receipt_data)[i][j];
+
+            clean_data_idx += 1;
+        }
+    }
+
+    char **temp = (*receipt_data);
+
+    (*receipt_data) = clean_data;
+
+    for (size_t i = 0; temp[i] != NULL; i++)
+        free(temp[i]);
+    free(temp);
+
+    printf("[LOG] - Leaving CleanData()\n");
+    return true;
+}
+
+bool ReadData(char ***receipt_data, const char *path)
+{
+    printf("[LOG] - Entered ReadData()\n");
+
+    const size_t MAX_EMAIL_LINES = 10000;
+    const size_t MAX_LINE_BYTES = 5000;
+
+    // allocate memory for receipt_data pointers
+    *receipt_data = (char **)malloc((1 + MAX_EMAIL_LINES) * sizeof(char *));
+    if (*receipt_data == NULL)
+    {
+        printf("[ERROR] - Failed to allocate memory for receipt_data\n");
+        return false;
+    }
 
     // open the file and check for error
     FILE *f = fopen(path, "r");
     if (f == NULL)
-        false;
-
-    // read each line from the file, storing it in email_content.
-    // if malloc fails or MAX_NUM_LINES is reached then exit
-    int num_lines_read = 0;
-    char buffer[MAX_LINE_BYTES];
-    while (fgets(buffer, MAX_LINE_BYTES, f))
     {
-        // allocate enough memory to store the next line (+1 for null terminator)
-        int line_length = strlen(buffer) + 1;
-        email_content[num_lines_read] = (char *)malloc(line_length * sizeof(char));
-        if (email_content[num_lines_read] == NULL)
-            return false;
-
-        // copy str from buffer to email_content
-        strcpy(email_content[num_lines_read], buffer);
-
-        // increment num_email_lines and check if we've gone over the line limit
-        num_lines_read += 1;
-        if (num_lines_read >= MAX_EMAIL_LINES)
-            return false;
+        printf("[ERROR] - Failed to open file %s for reading\n", path);
+        return false;
     }
 
+    // read each line from the file, storing it in receipt_data.
+    char buffer[MAX_LINE_BYTES];
+    for (size_t i = 0; fgets(buffer, MAX_LINE_BYTES, f) && i < MAX_EMAIL_LINES; i++)
+    {
+        size_t buffer_length = strlen(buffer);
+
+        // allocate memory to store the string from buffer
+        (*receipt_data)[i] = (char *)malloc((1 + buffer_length) * sizeof(char));
+        if ((*receipt_data)[i] == NULL)
+        {
+            printf("[ERROR] - Failed to allocate memory for receipt_data[%zu]\n", i);
+            return false;
+        }
+
+        // copy string from buffer to receipt_data
+        for (size_t j = 0; j < buffer_length; j++)
+            (*receipt_data)[i][j] = buffer[j];
+    }
     fclose(f);
+    printf("[LOG] - Leaving ReadData()\n");
     return true;
 }
 
-Receipt *MakeReceipt(char **clean_data)
+bool LoadReceipt(const char *path)
 {
-    return NULL;
-}
+    printf("[LOG] - Entered LoadReceipt()\n");
+    char **receipt_data;
 
-Receipt *LoadReceipt(const char *path)
-{
-    // read raw data in from the email
-    const unsigned MAX_EMAIL_LINES = 10000;
-
-    char **email_content = (char **)malloc(MAX_EMAIL_LINES * sizeof(char *));
-    if (email_content == NULL)
-        exit(EXIT_FAILURE);
-
-    // email content will be filled with data
-    // num_email_lines will be updated with actual number of email lines
-    if (!ReadData(email_content, path, MAX_EMAIL_LINES))
+    // Read the raw data from the email into receipt_data
+    if (!ReadData(&receipt_data, path))
     {
-        for (int i = 0; i < MAX_EMAIL_LINES; i++)
-            free(email_content[i]);
-        free(email_content);
-        exit(EXIT_FAILURE);
+        FreeReceiptData(receipt_data);
+        return false;
     }
 
-    // clean the raw data
-    int num_email_lines = -1;
-    for (int i = 0; email_content[i] != NULL; i++)
-        num_email_lines = i;
-
-    int num_clean_lines = num_email_lines;
-
-    char **clean_data = (char **)malloc(num_clean_lines * sizeof(char *));
-    if (clean_data == NULL)
+    // Clean the raw data
+    if(!CleanData(&receipt_data))
     {
-        for (int i = 0; i < MAX_EMAIL_LINES; i++)
-                free(email_content[i]);
-        free(email_content);
-        exit(EXIT_FAILURE);
+        FreeReceiptData(receipt_data);
+        return false;
     }
 
-    // clean_data will be filled with clean lines
-    // num_clean_lines will be updated with the actual number of clean lines
-    if(!CleanData(clean_data, email_content, &num_clean_lines))
-    {
-        for (int i = 0; i < MAX_EMAIL_LINES; i++)
-            free(email_content[i]);
-        for (int i = 0; i < num_email_lines; i++)
-            free(clean_data[i]);
+    for (size_t i = 0; receipt_data[i] != NULL; i++)
+        printf("%s\n", receipt_data[i]);
 
-        free(email_content);
-        free(clean_data);
-        exit(EXIT_FAILURE);
-    }
+    // free receipt_data as no longer needed
+    FreeReceiptData(receipt_data);
 
-    for (int i = 0; i < num_clean_lines; i++)
-        printf("%s\n", clean_data[i]);
-
-    // process cleaned data into receipt object
-    // TODO: Need to work out how memory allocation will work here?
-    Receipt *receipt = MakeReceipt(clean_data);
-
-    // free clean_data as no longer needed
-    for (int i = 0; i < num_clean_lines; i++)
-        free(clean_data[i]);
-    free(clean_data);
-
-    // return pointer to receipt object
-    return receipt;
+    return true;
 }

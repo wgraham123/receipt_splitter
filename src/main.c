@@ -6,9 +6,7 @@
 int main(int argc, char** argv){
 
     if (argc == 2) {
-        Receipt *receipt = LoadReceipt(argv[1]);
-        if (receipt == NULL)
-            exit(EXIT_FAILURE);
+        LoadReceipt(argv[1]);
         return 0;
     }
 

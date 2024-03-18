@@ -8,6 +8,6 @@ project:
 	@$(COMPILER) bin/Receipt.o bin/Main.o -o Splitter
 	@echo "Built Splitter"
 
-	@$(COMPILER) -c test/TestMain.c -Iinclude/ -o bin/TestMain.o -w
-	@$(COMPILER) bin/TestMain.o bin/Receipt.o -o TestSplitter -w
+	@$(COMPILER) -c test/Test.c -Iinclude/ -o bin/Test.o -w
+	@$(COMPILER) bin/Test.o bin/Receipt.o -o TestSplitter -w
 	@./TestSplitter
