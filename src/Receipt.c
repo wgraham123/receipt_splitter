@@ -17,10 +17,17 @@ void FreeReceiptData(char **receipt_data)
     return;
 }
 
+bool IsCleanChar(char c)
+{
+    if ((uint8_t) c >= 32 && (uint8_t) c <= 126)
+        return true;
+    return false;
+}
+
 bool CleanString(char **dirty_string)
 {
-    printf("[LOG] - Entering CleanString()\n");
-    printf("[LOG] - dirty_string = %s\n", (*dirty_string));
+    // printf("[LOG] - Entering CleanString()\n");
+    // printf("[LOG] - dirty_string = %s\n", (*dirty_string));
 
     if ((*dirty_string) == NULL){
         printf("[ERROR] - dirty_string = %s\n", (*dirty_string));
@@ -28,34 +35,18 @@ bool CleanString(char **dirty_string)
     }
 
     size_t dirty_len = strlen((*dirty_string));
-    printf("[LOG] - dirty_len = %zu\n", dirty_len);
-
-    // find first clean char that's not a space
-    size_t str_start_idx = 0;
-    for (size_t i = 0; ((*dirty_string)[i] < 33 || (*dirty_string)[i] > 126) && i < dirty_len; i++)
-        str_start_idx = i;
-
-    // find final clean char that's not a space
-    size_t str_end_idx = dirty_len - 1;
-    for (size_t i = dirty_len - 1; ((*dirty_string)[i] < 33 || (*dirty_string)[i] > 126) && i > -1; i--)
-        str_end_idx = i;
-
-    if (str_end_idx < str_start_idx)
-        str_end_idx = str_start_idx;
-
-    printf("[LOG] - str_start_idx = %zu\n", str_start_idx);
-    printf("[LOG] - str_end_idx = %zu\n", str_end_idx);
+    // printf("[LOG] - dirty_len = %zu\n", dirty_len);
 
     // count clean chars between str_start_idx and str_end_idx
     size_t clean_len = 0;
-    for (size_t i = str_start_idx; i < str_end_idx; i++)
-        if ((*dirty_string)[i] > 31 && (*dirty_string)[i] < 127)
+    for (size_t i = 0; i < dirty_len; i++)
+        if (IsCleanChar((*dirty_string)[i]))
             clean_len += 1;
 
-    printf("[LOG] - clean_len = %zu\n", clean_len);
+    // printf("[LOG] - clean_len = %zu\n", clean_len);
 
     // allocate some memory for clean_len + 1 chars
-    char *clean_string = (char *)malloc((clean_len + 1) * sizeof(char));
+    char *clean_string = (char *)malloc((1 + clean_len) * sizeof(char));
     if (clean_string == NULL)
     {
         printf("[ERROR] - Failed to allocate memory to clean_string\n");
@@ -64,20 +55,23 @@ bool CleanString(char **dirty_string)
 
     // fill clean_string with the clean chars from dirty_string
     size_t clean_idx = 0;
-    for (size_t i = str_start_idx; i < str_end_idx; i++)
+    for (size_t i = 0; i < dirty_len; i++)
     {
-        if ((*dirty_string)[i] > 31 && (*dirty_string)[i] < 127)
+        if (IsCleanChar((*dirty_string)[i]))
         {
             clean_string[clean_idx] = (*dirty_string)[i];
             clean_idx += 1;
         }
     }
 
-    printf("[LOG] - clean_string = %s\n", clean_string);
+    // printf("[LOG] - clean_string = %s\n", clean_string);
 
     if (clean_string[clean_len + 1] != '\0')
     {
-        printf("[ERROR] - clean_line overflow\n");
+        printf("[ERROR] - clean_string overflow\n");
+        printf("          clean_len, dirty_len: %zu, %zu\n", clean_len, dirty_len);
+        printf("          clean_string: %s\n", clean_string);
+        printf("          dirty_string: %s\n", (*dirty_string));
         return false;
     }
 
@@ -90,8 +84,8 @@ bool CleanString(char **dirty_string)
     // free memory pointed at by temp pointer
     free(temp);
 
-    printf("[LOG] - dirty_string = %s\n", (*dirty_string));
-    printf("[LOG] - Leaving CleanString()\n");
+    // printf("[LOG] - dirty_string = %s\n", (*dirty_string));
+    // printf("[LOG] - Leaving CleanString()\n");
     return true;
 }
 
@@ -126,6 +120,7 @@ bool CleanData(char ***receipt_data)
         return false;
     }
 
+    // go through receipt_data, copying strings with data to clean data as you go
     size_t clean_data_idx = 0;
     for (size_t i = 0; (*receipt_data)[i] != NULL; i++)
     {
@@ -145,6 +140,8 @@ bool CleanData(char ***receipt_data)
         }
     }
 
+    // move the receipt_data pointer to the clean data memory, 
+    // then free all the old receipt_data memory
     char **temp = (*receipt_data);
 
     (*receipt_data) = clean_data;
@@ -222,8 +219,8 @@ bool LoadReceipt(const char *path)
         return false;
     }
 
-    for (size_t i = 0; receipt_data[i] != NULL; i++)
-        printf("%s\n", receipt_data[i]);
+    // for (size_t i = 0; receipt_data[i] != NULL; i++)
+    //     printf("%s\n", receipt_data[i]);
 
     // free receipt_data as no longer needed
     FreeReceiptData(receipt_data);
