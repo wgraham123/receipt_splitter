@@ -34,7 +34,10 @@ bool CleanString(char **dirty_string)
         return false;
     }
 
-    size_t dirty_len = strlen((*dirty_string));
+    size_t dirty_len = 0;
+    for (size_t i = 0; (*dirty_string)[i] != '\0'; i++)
+        dirty_len = i;
+
     // printf("[LOG] - dirty_len = %zu\n", dirty_len);
 
     // count clean chars between str_start_idx and str_end_idx
@@ -66,7 +69,7 @@ bool CleanString(char **dirty_string)
 
     // printf("[LOG] - clean_string = %s\n", clean_string);
 
-    if (clean_string[clean_len + 1] != '\0')
+    if (clean_string[clean_len] != '\0')
     {
         printf("[ERROR] - clean_string overflow\n");
         printf("          clean_len, dirty_len: %zu, %zu\n", clean_len, dirty_len);
@@ -219,8 +222,8 @@ bool LoadReceipt(const char *path)
         return false;
     }
 
-    // for (size_t i = 0; receipt_data[i] != NULL; i++)
-    //     printf("%s\n", receipt_data[i]);
+    for (size_t i = 0; receipt_data[i] != NULL; i++)
+        printf("%s\n", receipt_data[i]);
 
     // free receipt_data as no longer needed
     FreeReceiptData(receipt_data);
