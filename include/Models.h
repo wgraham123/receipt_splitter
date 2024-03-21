@@ -1,21 +1,17 @@
 #ifndef __MODELS
 #define __MODELS
 
-struct Item
+typedef struct
 {
     char *description;
     float price;
     int quantity;
-};
+} Item;
 
-typedef struct Item Item;
-
-struct Receipt
+typedef struct
 {
     Item **items;
     float total;
-};
-
-typedef struct Receipt Receipt;
+} Receipt;
 
 #endif
