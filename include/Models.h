@@ -12,6 +12,7 @@ typedef struct
 {
     Item **items;
     float total;
+    int count;
 } Receipt;
 
 #endif

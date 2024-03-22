@@ -21,7 +21,7 @@ size_t Power(int base, int pow)
     return result;
 }
 
-int GetIndex(char *needle, char ***haystack)
+int GetIndex(char *needle, char **haystack)
 {
     if (needle == NULL || haystack == NULL)
     {
@@ -29,9 +29,9 @@ int GetIndex(char *needle, char ***haystack)
         return -1;
     }
 
-    for (size_t i = 0; (*haystack)[i] != NULL; i++)
+    for (size_t i = 0; haystack[i] != NULL; i++)
     {
-        if (StringEquals((*haystack)[i], needle))
+        if (StringEquals(haystack[i], needle))
         {
             return i;
         }

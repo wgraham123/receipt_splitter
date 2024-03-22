@@ -9,6 +9,14 @@
 
 #define MIN_FLOAT_DIFF 0.005
 
+float Abs(float a){
+
+    if (a < 0){
+        return -a;
+    }
+    return a;
+}
+
 void TestStringLength()
 {
     char *a = "";
@@ -55,9 +63,10 @@ void TestParseInt()
 
 void TestParseFloat()
 {
-    assert(abs(ParseFloat("123.123") - 123.123) <= MIN_FLOAT_DIFF);
-    assert(abs(ParseFloat("0.5") - 0.5) <= MIN_FLOAT_DIFF);
-    assert(abs(ParseFloat("0") - -1) <= MIN_FLOAT_DIFF);
+    assert(Abs(ParseFloat("123.123") - 123.123) <= MIN_FLOAT_DIFF);
+    assert(Abs(ParseFloat("0.5") - 0.5) <= MIN_FLOAT_DIFF);
+    assert(Abs(ParseFloat("0") - -1) <= MIN_FLOAT_DIFF);
+    assert(Abs(ParseFloat("1.02") - 1.02) <= MIN_FLOAT_DIFF);
 
     assert(abs(ParseFloat("abc123.123abc") - 123.123) <= MIN_FLOAT_DIFF);
 }
