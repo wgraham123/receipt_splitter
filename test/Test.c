@@ -7,15 +7,7 @@
 #include <HelperFunctions.h>
 #include <Receipt.h>
 
-#define MIN_FLOAT_DIFF 0.005
-
-float Abs(float a){
-
-    if (a < 0){
-        return -a;
-    }
-    return a;
-}
+#define FLOAT_TOL 0.001
 
 void TestStringLength()
 {
@@ -53,22 +45,38 @@ void TestCleanString()
 }
 void TestParseInt()
 {
-    assert(ParseInt("123456789") == 123456789);
-    assert(ParseInt("-123") == 123);
     assert(ParseInt("0") == 0);
+    assert(ParseInt("1") == 1);
+    assert(ParseInt("10") == 10);
+    assert(ParseInt("100") == 100);
+    assert(ParseInt("101") == 101);
+    assert(ParseInt("123456789") == 123456789);
 
-    assert(ParseInt("abc123abc") == 123);
+    assert(ParseInt("010") == 10);
+    assert(ParseInt("0001") == 1);
+
+    assert(ParseInt("-0") == -1);
+    assert(ParseInt("-123") == -1);
+    assert(ParseInt("abc123abc") == -1);
     assert(ParseInt("") == -1);
 }
 
 void TestParseFloat()
 {
-    assert(Abs(ParseFloat("123.123") - 123.123) <= MIN_FLOAT_DIFF);
-    assert(Abs(ParseFloat("0.5") - 0.5) <= MIN_FLOAT_DIFF);
-    assert(Abs(ParseFloat("0") - -1) <= MIN_FLOAT_DIFF);
-    assert(Abs(ParseFloat("1.02") - 1.02) <= MIN_FLOAT_DIFF);
+    assert(Abs(ParseFloat("0.0") - 0) <= FLOAT_TOL);
+    assert(Abs(ParseFloat("1.0") - 1) <= FLOAT_TOL);
+    assert(Abs(ParseFloat("0.1") - 0.1) <= FLOAT_TOL);
+    assert(Abs(ParseFloat("1.1") - 1.1) <= FLOAT_TOL);
+    assert(Abs(ParseFloat("01.01") - 1.01) <= FLOAT_TOL);
+    assert(Abs(ParseFloat("000.001") - 0.001) <= FLOAT_TOL);
+    assert(Abs(ParseFloat("123987.987123") - 123987.987123) <= FLOAT_TOL);
+    assert(Abs(ParseFloat("501.105") - 501.105) <= FLOAT_TOL);
 
-    assert(abs(ParseFloat("abc123.123abc") - 123.123) <= MIN_FLOAT_DIFF);
+    assert(Abs(ParseFloat("0") - -1) <= FLOAT_TOL);
+    assert(Abs(ParseFloat("-1") - -1) <= FLOAT_TOL);
+    assert(Abs(ParseFloat("") - -1) <= FLOAT_TOL);
+
+    assert(abs(ParseFloat("abc123.123abc") - -1) <= FLOAT_TOL);
 }
 
 int main()

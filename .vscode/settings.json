@@ -4,6 +4,8 @@
         "stdlib.h": "c",
         "stdbool.h": "c",
         "stdint.h": "c",
-        "models.h": "c"
+        "models.h": "c",
+        "helperfunctions.h": "c",
+        "receipt.h": "c"
     }
 }

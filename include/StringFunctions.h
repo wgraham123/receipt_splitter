@@ -1,12 +1,12 @@
 #include <stdbool.h>
-#include <stdlib.h>
 
 #ifndef __STRING_FUNCTIONS
 #define __STRING_FUNCTIONS
 
-size_t StringLength(char *);
+int StringLength(char *);
 bool StringEquals(char *, char *);
+int ParseDigit(char);
 int ParseInt(char *);
-float ParseFloat(char *);
+double ParseFloat(char *);
 
 #endif

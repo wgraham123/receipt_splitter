@@ -266,11 +266,6 @@ bool ExtractRestOfItems(char ***receipt_data, Receipt **receipt, size_t *num_ite
                 continue;
             }
 
-            if (StringEquals((*receipt_data)[i + 1], "Tesco Finest Sardines With Chilli, Lime & Coriander 105G"))
-            {
-                printf("%s\n", (*receipt_data)[i + 3]);
-            }
-
             Item *item = (Item *)malloc(sizeof(Item));
             item->price = ParseFloat((*receipt_data)[i + 3]);
             item->quantity = ParseInt((*receipt_data)[i]);

@@ -6,8 +6,6 @@
 
 // Reads a tesco receipt email, cleans the data and makes a receipt object out of it
 void FreeReceiptData(char **);
-
-
 bool IsCleanChar(char);
 bool CleanString(char **);
 bool CleanData(char ***);

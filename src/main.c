@@ -34,11 +34,11 @@ int main(int argc, char** argv){
 
         LoadReceipt(argv[1], &receipt);
 
-        // for (size_t i = 0; receipt.items[i] != NULL; i++){
-        //     printf("\nitem.description = %s\nitem.quantity = %i\nitem.price = £%.2f\n", receipt.items[i]->description, receipt.items[i]->quantity, receipt.items[i]->price);
-        // }
+        for (size_t i = 0; receipt.items[i] != NULL; i++){
+            printf("\nitem.description = %s\nitem.quantity = %i\nitem.price = £%.2f\n", receipt.items[i]->description, receipt.items[i]->quantity, receipt.items[i]->price);
+        }
 
-        // printf("\nReceipt items = %i\nReceipt total = £%.2f\n", receipt.count, receipt.total);
+        printf("\nReceipt items = %i\nReceipt total = £%.2f\n", receipt.count, receipt.total);
         
         FreeReceipt(&receipt);
         return 0;
