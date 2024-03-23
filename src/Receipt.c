@@ -191,22 +191,22 @@ bool ReadData(char ***receipt_data, const char *path)
     return true;
 }
 
-bool ExtractSubstitutions(char ***receipt_data, Receipt **receipt, size_t *num_items)
+bool ExtractSubstitutions(char ***receipt_data, Receipt **receipt, int *num_items)
 {
     // Find the index of the line that says "Substitutions"
-    const size_t SUBS_INDEX = GetIndex("Substitutions", *receipt_data);
+    const int SUBS_INDEX = GetIndex("Substitutions", *receipt_data);
     if (SUBS_INDEX == -1)
         return false;
 
     // Find the index of the line that says "The rest of your items"
-    const size_t ROI_INDEX = GetIndex("The rest of your items", *receipt_data);
+    const int ROI_INDEX = GetIndex("The rest of your items", *receipt_data);
     if (ROI_INDEX == -1)
         return false;
 
     // Work through the data between "Substitutions" and "The rest of your items"
-    size_t item_index = *num_items;
+    int item_index = *num_items;
     bool begin_processing = false;
-    for (size_t i = SUBS_INDEX; i < ROI_INDEX; i++)
+    for (int i = SUBS_INDEX; i < ROI_INDEX; i++)
     {
         if (StringEquals((*receipt_data)[i], "Total"))
         {
@@ -219,10 +219,10 @@ bool ExtractSubstitutions(char ***receipt_data, Receipt **receipt, size_t *num_i
 
             Item *item = (Item *)malloc(sizeof(Item));
             item->price = ParseFloat((*receipt_data)[i + 4]);
-            item->quantity = ParseInt((*receipt_data)[i + 5]);
+            item->quantity = (double) ParseInt((*receipt_data)[i + 5]);
 
             item->description = (char *)malloc((1 + StringLength((*receipt_data)[i + 6])) * sizeof(char));
-            for (size_t j = 0; (*receipt_data)[i + 6][j] != '\0'; j++)
+            for (int j = 0; (*receipt_data)[i + 6][j] != '\0'; j++)
                 item->description[j] = (*receipt_data)[i + 6][j];
 
             (*receipt)->items[item_index] = item;
@@ -234,23 +234,23 @@ bool ExtractSubstitutions(char ***receipt_data, Receipt **receipt, size_t *num_i
     return true;
 }
 
-bool ExtractRestOfItems(char ***receipt_data, Receipt **receipt, size_t *num_items)
+bool ExtractRestOfItems(char ***receipt_data, Receipt **receipt, int *num_items)
 {
     // Find the index of the line that says "The rest of your items"
-    const size_t ROI_INDEX = GetIndex("The rest of your items", *receipt_data);
+    const int ROI_INDEX = GetIndex("The rest of your items", *receipt_data);
     if (ROI_INDEX == -1)
         return false;
 
     // Find the index of the line that says "Items marked with an  include VAT at 20%. Items marked with  include VAT at 5%."
-    const size_t VAT_INDEX = GetIndex("Items marked with an  include VAT at 20%. Items marked with  include VAT at 5%.", *receipt_data);
+    const int VAT_INDEX = GetIndex("Items marked with an  include VAT at 20%. Items marked with  include VAT at 5%.", *receipt_data);
     if (VAT_INDEX == -1)
         return false;
 
     // Work through the data between "The rest of your items" and
     // "Items marked with an  include VAT at 20%. Items marked with  include VAT at 5%."
-    size_t item_index = *num_items;
+    int item_index = *num_items;
     bool begin_processing = false;
-    for (size_t i = ROI_INDEX; i < VAT_INDEX; i++)
+    for (int i = ROI_INDEX; i < VAT_INDEX; i++)
     {
         if (StringEquals((*receipt_data)[i], "Total"))
         {
@@ -262,16 +262,14 @@ bool ExtractRestOfItems(char ***receipt_data, Receipt **receipt, size_t *num_ite
         {
 
             if ((*receipt_data)[i][0] < 48 || (*receipt_data)[i][0] > 57)
-            {
                 continue;
-            }
 
             Item *item = (Item *)malloc(sizeof(Item));
             item->price = ParseFloat((*receipt_data)[i + 3]);
-            item->quantity = ParseInt((*receipt_data)[i]);
+            item->quantity = (double) ParseInt((*receipt_data)[i]);
 
             item->description = (char *)malloc((1 + StringLength((*receipt_data)[i + 1])) * sizeof(char));
-            for (size_t j = 0; (*receipt_data)[i + 1][j] != '\0'; j++)
+            for (int j = 0; (*receipt_data)[i + 1][j] != '\0'; j++)
                 item->description[j] = (*receipt_data)[i + 1][j];
 
             (*receipt)->items[item_index] = item;
@@ -283,19 +281,19 @@ bool ExtractRestOfItems(char ***receipt_data, Receipt **receipt, size_t *num_ite
     return true;
 }
 
-bool AddDelivery(char ***receipt_data, Receipt **receipt, size_t *num_items)
+bool AddDelivery(char ***receipt_data, Receipt **receipt, int *num_items)
 {
 
-    const size_t DELIVERY_INDEX = GetIndex("Pick, pack and deliver", *receipt_data);
+    const int DELIVERY_INDEX = GetIndex("Pick, pack and deliver", *receipt_data);
 
     Item *item = (Item *)malloc(sizeof(Item));
     item->price = ParseFloat((*receipt_data)[DELIVERY_INDEX + 1]);
-    item->quantity = 1;
+    item->quantity = 1.0;
 
     char *delivery = "Delivery";
 
     item->description = (char *)malloc((1 + StringLength(delivery)) * sizeof(char));
-    for (size_t j = 0; delivery[j] != '\0'; j++)
+    for (int j = 0; delivery[j] != '\0'; j++)
         item->description[j] = delivery[j];
 
     (*receipt)->items[*num_items] = item;
@@ -307,8 +305,8 @@ bool AddDelivery(char ***receipt_data, Receipt **receipt, size_t *num_items)
 bool MakeReceipt(char ***receipt_data, Receipt **receipt)
 {
     printf("[LOG] - Entered MakeReceipt()\n");
-    // TODO: Error currently present where prices like £1.02 are getting read as £1.20
-    size_t num_items = 0;
+
+    int num_items = 0;
 
     ExtractSubstitutions(receipt_data, receipt, &num_items);
 
@@ -316,8 +314,8 @@ bool MakeReceipt(char ***receipt_data, Receipt **receipt)
 
     AddDelivery(receipt_data, receipt, &num_items);
 
-    (*receipt)->count = num_items;
-    for (size_t i = 0; (*receipt)->items[i] != NULL; i++)
+    (*receipt)->count = (double) num_items;
+    for (int i = 0; (*receipt)->items[i] != NULL; i++)
         (*receipt)->total += (*receipt)->items[i]->price;
 
     printf("[LOG] - Leaving MakeReceipt()\n");

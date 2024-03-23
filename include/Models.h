@@ -4,15 +4,21 @@
 typedef struct
 {
     char *description;
-    float price;
-    int quantity;
+    double price;
+    double quantity;
 } Item;
 
 typedef struct
 {
     Item **items;
-    float total;
-    int count;
+    double total;
+    double count;
 } Receipt;
+
+typedef struct
+{
+    Receipt *receipt;
+    char *name;
+} Person;
 
 #endif

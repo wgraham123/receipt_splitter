@@ -113,3 +113,34 @@ double ParseFloat(char *str)
 
     return result;
 }
+
+bool Split(char *str, char delim, char ***result)
+{
+    char *buffer;
+    int str_idx = 0;
+    int buffer_idx = 0;
+    int result_idx = 0;
+    while (str[str_idx] != '\0')
+    {
+        if (str[str_idx] == delim)
+        {
+            int buffer_length = StringLength(buffer);
+            
+            (*result)[result_idx] = (char *)malloc((1 + buffer_length) * sizeof(char));
+            
+            for (int j = 0; buffer[j] != '\0'; j++)
+            {
+                (*result)[result_idx][j] = buffer[j];
+                buffer[j] = '\0';
+            }
+
+            result_idx += 1;
+            buffer_idx = 0;
+            continue;
+        }
+
+        buffer[buffer_idx] = str[str_idx];
+        str_idx += 1;
+        buffer_idx += 1;
+    }
+}
