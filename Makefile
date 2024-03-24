@@ -7,11 +7,13 @@ project:
 	@echo "Built HelperFunctions.c"
 	@$(COMPILER) -c src/Receipt.c -Iinclude/ -o bin/Receipt.o
 	@echo "Built Receipt.c"
+	@$(COMPILER) -c src/UserInput.c -Iinclude/ -o bin/UserInput.o
+	@echo "Built UserInput.c"
 	@$(COMPILER) -c src/SplitReceipt.c -Iinclude/ -o bin/SplitReceipt.o
 	@echo "Built SplitReceipt.c"
 	@$(COMPILER) -c src/Main.c -Iinclude/ -o bin/Main.o
 	@echo "Built Main.c"
-	@$(COMPILER) bin/SplitReceipt.o bin/Receipt.o bin/Main.o bin/StringFunctions.o bin/HelperFunctions.o -o Splitter
+	@$(COMPILER) bin/UserInput.o bin/SplitReceipt.o bin/Receipt.o bin/Main.o bin/StringFunctions.o bin/HelperFunctions.o -o Splitter
 	@echo "Built Splitter"
 
 	@$(COMPILER) -c test/Test.c -Iinclude/ -o bin/Test.o -w
