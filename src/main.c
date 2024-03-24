@@ -8,36 +8,40 @@
 
 #define MAX_NUM_ITEMS 100
 
-void FreeReceipt(Receipt *receipt)
+void FreeReceiptItems(Item **items)
 {
-    if (receipt == NULL)
-        exit(EXIT_FAILURE);
-
-    int i = 0;
-    for (int i = 0; receipt->items[i] != NULL; i++)
+    if (items == NULL)
+        return;
+    
+    for (int i = 0; items[i] != NULL; i++)
     {
-        free(receipt->items[i]->description);
-        free(receipt->items[i]);
-    }
+        if (items[i]->description != NULL)
+            free(items[i]->description);
 
-    free(receipt->items);
+        free(items[i]);
+    }
 
     return;
 }
 
 void FreePeople(Person ***people)
 {
-    if (people == NULL)
+    if (*people == NULL)
         exit(EXIT_FAILURE);
 
     for (int i = 0; (*people)[i] != NULL; i++)
     {
-        free((*people)[i]->name);
-        FreeReceipt((*people)[i]->receipt);
+        if ((*people)[i]->name != NULL)
+            free((*people)[i]->name);
+
+        if ((*people)[i]->receipt != NULL)
+            FreeReceiptItems((*people)[i]->receipt->items);
+
         free((*people)[i]);
     }
-    
+
     free((*people));
+
     return;
 }
 
@@ -51,7 +55,8 @@ int main(int argc, char **argv)
         Receipt receipt = {
             .items = (Item **)malloc(MAX_NUM_ITEMS * sizeof(Item *)),
             .count = 0,
-            .total = 0.0};
+            .total = 0.0
+        };
 
         LoadReceipt(argv[1], &receipt);
 
@@ -62,19 +67,15 @@ int main(int argc, char **argv)
 
         // TODO: Should probably move the name gathering out to here, or in a standalone file.
         Person **people = GatherNamesFromUser();
-        if (people == NULL){
-            FreeReceipt(&receipt);
-            exit(EXIT_FAILURE);
-        }
-
-        for (int i = 0; people[i] != NULL; i++)
+        if (people == NULL)
         {
-            printf("%.1f\n", people[i]->receipt->count);
+            FreeReceiptItems(receipt.items);
+            exit(EXIT_FAILURE);
         }
 
         SplitReceipt(&receipt, &people);
 
-        FreeReceipt(&receipt);
+        FreeReceiptItems(receipt.items);
         FreePeople(&people);
         return 0;
     }

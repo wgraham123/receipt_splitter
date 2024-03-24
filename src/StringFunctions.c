@@ -126,9 +126,6 @@ bool Split(char *str, char delim, char ***result)
         if (str[i] == delim)
             num_delims += 1;
 
-    if (num_delims == 0)
-        return false;
-
     // Allocate memory for the necessary number of pointers.
     (*result) = (char **)malloc((2 + num_delims) * sizeof(char *));
     if ((*result) == NULL)

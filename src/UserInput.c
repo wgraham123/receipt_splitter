@@ -58,15 +58,13 @@ Person **GatherNamesFromUser()
 
         for (int j = 0; split_names[i][j] != '\0'; j++)
             people[i]->name[j] = split_names[i][j];
-        
+
         // set up person receipt
         people[i]->receipt = (Receipt *)malloc(sizeof(Receipt));
-        Receipt r = {
-            .items = NULL,
-            .count = 0.0,
-            .total = 0.0
-        };
-        people[i]->receipt = &r;
+
+        people[i]->receipt->items = NULL;
+        people[i]->receipt->count = 0.0;
+        people[i]->receipt->total = 0.0;
     }
 
     return people;
