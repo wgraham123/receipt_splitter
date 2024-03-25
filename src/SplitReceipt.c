@@ -5,13 +5,24 @@
 #include <Models.h>
 #include <StringFunctions.h>
 
+void AppendItem(Item ***items, Item *item)
+{
+    int length_items = 0;
+    while ((*items)[length_items] != NULL)
+        length_items += 1;
+
+    Item **new_items = (Item **)malloc((1 + length_items) * sizeof(Item));
+
+    
+}
+
 bool AddItemToPersonsReceipt(Item *item, double share, char *splitee, Person ***people)
 {
     for (int i = 0; (*people)[i] != NULL; i++)
     {
         if (StringEquals((*people)[i]->name, splitee))
         {
-            AppendItem(&((*people)[i]->receipt->items), *item);
+            AppendItem(&((*people)[i]->receipt->items), item);
             (*people)[i]->receipt->count += item->quantity * share;
             (*people)[i]->receipt->total += item->price * share;
             return true;
@@ -22,14 +33,38 @@ bool AddItemToPersonsReceipt(Item *item, double share, char *splitee, Person ***
 
 bool SpliteesAreValid(char **splitees, Person **people)
 {
+    int num_splitees = 0;
+    while (splitees[num_splitees] != NULL)
+        num_splitees += 1;
+
+    bool splitee_found[num_splitees];
+    for (int i = 0; i < num_splitees; i++)
+        splitee_found[i] = false;
+
+    for (int i = 0; splitees[i] != NULL; i++)
+    {
+        for (int j = 0; people[j] != NULL; j++)
+        {
+            if (splitees[i] == people[j])
+            {
+                splitee_found[i] = true;
+                break;
+            }
+        }
+    }
+
+    for (int i = 0; i < num_splitees; i++)
+        if (splitee_found[i] == false)
+            return false;
+
     return true;
 }
 
 void SplitItem(Item *item, Person ***people)
 {
     char **splitees;
-    
-    while(1)
+
+    while (1)
     {
         splitees = GetSpliteesFromUser();
         if (SpliteesAreValid(splitees, *people))
@@ -49,7 +84,7 @@ void SplitItem(Item *item, Person ***people)
 
     for (int i = 0; splitees[i] != NULL; i++)
         AddItemToPersonsReceipt(item, equal_sharing, splitees[i], people);
-    
+
     return;
 }
 

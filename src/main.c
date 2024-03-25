@@ -52,18 +52,13 @@ int main(int argc, char **argv)
     {
         // TODO: shouldnt allocate MAX_NUM_ITEMS pointers, i should just leave it as NULL and then
         // do it dynamically in LoadReceipt.
-        Receipt receipt = {
-            .items = (Item **)malloc(MAX_NUM_ITEMS * sizeof(Item *)),
-            .count = 0,
-            .total = 0.0
-        };
 
-        LoadReceipt(argv[1], &receipt);
+        Receipt *receipt = LoadReceipt(argv[1]);
 
-        for (int i = 0; receipt.items[i] != NULL; i++)
-            printf("\nDescription: %s\nQuantity: %.1f\nPrice: £%.2f\n", receipt.items[i]->description, receipt.items[i]->quantity, receipt.items[i]->price);
+        for (int i = 0; receipt->items[i] != NULL; i++)
+            printf("\nDescription: %s\nQuantity: %.1f\nPrice: £%.2f\n", receipt->items[i]->description, receipt.items[i]->quantity, receipt.items[i]->price);
 
-        printf("\nReceipt Total: £%.2f\n", receipt.total);
+        printf("\nReceipt Total: £%.2f\n", receipt->total);
 
         // TODO: Should probably move the name gathering out to here, or in a standalone file.
         Person **people = GatherNamesFromUser();

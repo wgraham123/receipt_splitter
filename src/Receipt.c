@@ -6,15 +6,19 @@
 #include <StringFunctions.h>
 #include <HelperFunctions.h>
 
-void FreeReceiptData(char ***receipt_data)
+#define MAX_EMAIL_LINES 5000
+#define MAX_LINE_BYTES 512
+#define MAX_ITEMS 500
+
+void FreeReceiptData(char **receipt_data)
 {
-    if ((*receipt_data) == NULL)
+    if (receipt_data == NULL)
         return;
 
-    for (size_t i = 0; (*receipt_data)[i] != NULL; i++)
-        free((*receipt_data)[i]);
-    free((*receipt_data));
-    
+    for (size_t i = 0; receipt_data[i] != NULL; i++)
+        free(receipt_data[i]);
+    free(receipt_data);
+
     return;
 }
 
@@ -27,7 +31,8 @@ bool IsCleanChar(char c)
 
 bool CleanString(char **dirty_string)
 {
-    if ((*dirty_string) == NULL){
+    if ((*dirty_string) == NULL)
+    {
         printf("[ERROR] - dirty_string = NULL\n");
         return false;
     }
@@ -68,7 +73,7 @@ bool CleanString(char **dirty_string)
     // store dirty_string pointer in temp pointer
     char *temp = (*dirty_string);
 
-    //point dirty_string at clean_string
+    // point dirty_string at clean_string
     (*dirty_string) = clean_string;
 
     // free memory pointed at by temp pointer
@@ -81,39 +86,32 @@ bool CleanData(char ***receipt_data)
 {
     printf("[LOG] - Entered CleanData()\n");
     // Count how many elements are in the receipt_data array
-    size_t num_strings = 0;
-    for (size_t i = 0; (*receipt_data)[i] != NULL; i++)
-        num_strings = i;
-    
-    if (num_strings == 0)
-    {
-        printf("[ERROR] - num_strings = %zu\n", num_strings);
-        return false;
-    }
+    int num_strings = 0;
+    while ((*receipt_data)[num_strings] != NULL)
+        num_strings += 1;
 
+    if (num_strings == 0)
+        return false;
+    
     // Clean each string in receipt data
-    for (size_t i = 0; i < num_strings; i++){
+    for (int i = 0; i < num_strings; i++)
         CleanString(&((*receipt_data)[i]));
-    }
 
     // resize receipt_data, leaving out any strings with no useful data
-    size_t num_valid_strings = 0;
-    for (size_t i = 0; (*receipt_data)[i] != NULL; i++)
+    int num_valid_strings = 0;
+    for (int i = 0; (*receipt_data)[i] != NULL; i++)
         if (StringLength((*receipt_data)[i]) != 0)
             num_valid_strings += 1;
 
     char **clean_data = (char **)malloc((1 + num_valid_strings) * sizeof(char *));
     if (clean_data == NULL)
-    {
-        printf("[ERROR] - Failed to allocate memory for clean_data\n");
         return false;
-    }
 
     // go through receipt_data, copying strings with data to clean data as you go
-    size_t clean_data_idx = 0;
-    for (size_t i = 0; (*receipt_data)[i] != NULL; i++)
+    int clean_data_idx = 0;
+    for (int i = 0; (*receipt_data)[i] != NULL; i++)
     {
-        size_t string_length = StringLength((*receipt_data)[i]);
+        int string_length = StringLength((*receipt_data)[i]);
         if (string_length != 0)
         {
             clean_data[clean_data_idx] = (char *)malloc((1 + string_length) * sizeof(char));
@@ -122,14 +120,14 @@ bool CleanData(char ***receipt_data)
                 printf("[ERROR] - Failed to allocate memory for clean_data[%zu]\n", clean_data_idx);
                 return false;
             }
-            for (size_t j = 0; j < string_length; j++)
+            for (int j = 0; j < string_length; j++)
                 clean_data[clean_data_idx][j] = (*receipt_data)[i][j];
 
             clean_data_idx += 1;
         }
     }
 
-    // move the receipt_data pointer to the clean data memory, 
+    // move the receipt_data pointer to the clean data memory,
     // then free all the old receipt_data memory
     char **temp = (*receipt_data);
 
@@ -143,72 +141,70 @@ bool CleanData(char ***receipt_data)
     return true;
 }
 
-bool ReadData(char ***receipt_data, const char *path)
+bool ReadDataFromFile(char *path)
 {
     printf("[LOG] - Entered ReadData()\n");
 
-    const size_t MAX_EMAIL_LINES = 10000;
-    const size_t MAX_LINE_BYTES = 5000;
-
-    // allocate memory for receipt_data pointers
-    *receipt_data = (char **)malloc((1 + MAX_EMAIL_LINES) * sizeof(char *));
-    if (*receipt_data == NULL)
-    {
-        printf("[ERROR] - Failed to allocate memory for receipt_data\n");
-        return false;
-    }
-
-    // open the file and check for error
     FILE *f = fopen(path, "r");
     if (f == NULL)
-    {
-        printf("[ERROR] - Failed to open file %s for reading\n", path);
         return false;
-    }
 
-    // read each line from the file, storing it in receipt_data.
-    char buffer[MAX_LINE_BYTES];
-    for (size_t i = 0; fgets(buffer, MAX_LINE_BYTES, f) && i < MAX_EMAIL_LINES; i++)
+    char *data_buf[MAX_EMAIL_LINES];
+    char line_buf[MAX_LINE_BYTES];
+    for (int i = 0; fgets(line_buf, MAX_LINE_BYTES, f) && i < MAX_EMAIL_LINES; i++)
     {
-        size_t buffer_length = 0;
-        for (size_t i = 0; buffer[i] != '\0'; i++)
-            buffer_length = i;
+        int line_buf_length = StringLength(line_buf);
 
-        // allocate memory to store the string from buffer
-        (*receipt_data)[i] = (char *)malloc((1 + buffer_length) * sizeof(char));
-        if ((*receipt_data)[i] == NULL)
+        data_buf[i] = (char *)malloc((1 + line_buf_length) * sizeof(char));
+        if (data_buf[i] == NULL)
         {
-            printf("[ERROR] - Failed to allocate memory for receipt_data[%zu]\n", i);
+            FreeData(data_buf);
             return false;
         }
 
-        // copy string from buffer to receipt_data
-        for (size_t j = 0; j < buffer_length; j++)
-            (*receipt_data)[i][j] = buffer[j];
+        for (int j = 0; j < line_buf_length; j++)
+            data_buf[i][j] = line_buf[j];
     }
     fclose(f);
+
+    int data_buf_length = 0;
+    while(data_buf[data_buf_length] != NULL)
+        data_buf_length += 1;
+
+    char **data = (char **)malloc((1 + data_buf_length) * sizeof(char *));
+    if (data == NULL)
+    {
+        FreeData(data_buf);
+        return false;
+    }
+
+    for (int i = 0; data_buf[i] != NULL; i++)
+        data[i] = data_buf[i];
+
     printf("[LOG] - Leaving ReadData()\n");
-    return true;
+    return data;
 }
 
-bool ExtractSubstitutions(char ***receipt_data, Receipt **receipt, int *num_items)
+bool ExtractSubstitutions(char **receipt_data, Item ***items_buf)
 {
-    // Find the index of the line that says "Substitutions"
-    const int SUBS_INDEX = GetIndex("Substitutions", *receipt_data);
-    if (SUBS_INDEX == -1)
+    int subs_index = GetIndex("Substitutions", receipt_data);
+    if (subs_index == -1)
         return false;
 
     // Find the index of the line that says "The rest of your items"
-    const int ROI_INDEX = GetIndex("The rest of your items", *receipt_data);
-    if (ROI_INDEX == -1)
+    int roi_index = GetIndex("The rest of your items", receipt_data);
+    if (roi_index == -1)
         return false;
 
     // Work through the data between "Substitutions" and "The rest of your items"
-    int item_index = *num_items;
+    int item_index = 0;
+    while ((*items_buf)[item_index] != NULL)
+        item_index += 1;
+
     bool begin_processing = false;
-    for (int i = SUBS_INDEX; i < ROI_INDEX; i++)
+    for (int i = subs_index; i < roi_index; i++)
     {
-        if (StringEquals((*receipt_data)[i], "Total"))
+        if (StringEquals(receipt_data[i], "Total"))
         {
             begin_processing = true;
             continue;
@@ -218,41 +214,49 @@ bool ExtractSubstitutions(char ***receipt_data, Receipt **receipt, int *num_item
         {
 
             Item *item = (Item *)malloc(sizeof(Item));
-            item->price = ParseFloat((*receipt_data)[i + 4]);
-            item->quantity = (double) ParseInt((*receipt_data)[i + 5]);
+            if (item == NULL)
+                return false;
 
-            item->description = (char *)malloc((1 + StringLength((*receipt_data)[i + 6])) * sizeof(char));
-            for (int j = 0; (*receipt_data)[i + 6][j] != '\0'; j++)
-                item->description[j] = (*receipt_data)[i + 6][j];
+            item->price = ParseFloat(receipt_data[i + 4]);
+            item->quantity = (double)ParseInt(receipt_data[i + 5]);
 
-            (*receipt)->items[item_index] = item;
+            item->description = (char *)malloc((1 + StringLength(receipt_data[i + 6])) * sizeof(char));
+            if (item->description == NULL)
+            {
+                free(item);
+                return false;
+            }
+
+            for (int j = 0; receipt_data[i + 6][j] != '\0'; j++)
+                item->description[j] = receipt_data[i + 6][j];
+
+            (*items_buf)[item_index] = item;
             item_index += 1;
             i += 7;
         }
     }
-    *num_items = item_index;
+
     return true;
 }
 
-bool ExtractRestOfItems(char ***receipt_data, Receipt **receipt, int *num_items)
+bool ExtractRestOfItems(char **receipt_data, Item ***items_buf)
 {
-    // Find the index of the line that says "The rest of your items"
-    const int ROI_INDEX = GetIndex("The rest of your items", *receipt_data);
-    if (ROI_INDEX == -1)
+    int roi_index = GetIndex("The rest of your items", receipt_data);
+    if (roi_index == -1)
         return false;
 
-    // Find the index of the line that says "Items marked with an  include VAT at 20%. Items marked with  include VAT at 5%."
-    const int VAT_INDEX = GetIndex("Items marked with an  include VAT at 20%. Items marked with  include VAT at 5%.", *receipt_data);
-    if (VAT_INDEX == -1)
+    int vat_index = GetIndex("Items marked with an  include VAT at 20%. Items marked with  include VAT at 5%.", *receipt_data);
+    if (vat_index == -1)
         return false;
 
-    // Work through the data between "The rest of your items" and
-    // "Items marked with an  include VAT at 20%. Items marked with  include VAT at 5%."
-    int item_index = *num_items;
+    int item_index = 0;
+    while ((*items_buf)[item_index] != NULL)
+        item_index += 1;
+
     bool begin_processing = false;
-    for (int i = ROI_INDEX; i < VAT_INDEX; i++)
+    for (int i = roi_index; i < vat_index; i++)
     {
-        if (StringEquals((*receipt_data)[i], "Total"))
+        if (StringEquals(receipt_data[i], "Total"))
         {
             begin_processing = true;
             continue;
@@ -261,98 +265,140 @@ bool ExtractRestOfItems(char ***receipt_data, Receipt **receipt, int *num_items)
         if (begin_processing)
         {
 
-            if ((*receipt_data)[i][0] < 48 || (*receipt_data)[i][0] > 57)
+            if (receipt_data[i][0] < 48 || receipt_data[i][0] > 57)
                 continue;
 
             Item *item = (Item *)malloc(sizeof(Item));
-            item->price = ParseFloat((*receipt_data)[i + 3]);
-            item->quantity = (double) ParseInt((*receipt_data)[i]);
+            if (item == NULL)
+                return false;
 
-            item->description = (char *)malloc((1 + StringLength((*receipt_data)[i + 1])) * sizeof(char));
-            for (int j = 0; (*receipt_data)[i + 1][j] != '\0'; j++)
-                item->description[j] = (*receipt_data)[i + 1][j];
+            item->price = ParseFloat(receipt_data[i + 3]);
+            item->quantity = (double)ParseInt(receipt_data[i]);
 
-            (*receipt)->items[item_index] = item;
+            item->description = (char *)malloc((1 + StringLength(receipt_data[i + 1])) * sizeof(char));
+            if (item->description == NULL)
+            {
+                free(item);
+                return false;
+            }
+
+            for (int j = 0; receipt_data[i + 1][j] != '\0'; j++)
+                item->description[j] = receipt_data[i + 1][j];
+
+            (*items_buf)[item_index] = item;
             item_index += 1;
             i += 4;
         }
     }
-    *num_items = item_index;
+
     return true;
 }
 
-bool AddDelivery(char ***receipt_data, Receipt **receipt, int *num_items)
+bool AddDelivery(char **data, Item ***items_buf)
 {
-
-    const int DELIVERY_INDEX = GetIndex("Pick, pack and deliver", *receipt_data);
+    int delivery_index = GetIndex("Pick, pack and deliver", data);
+    if (delivery_index == -1)
+        return false;
 
     Item *item = (Item *)malloc(sizeof(Item));
-    item->price = ParseFloat((*receipt_data)[DELIVERY_INDEX + 1]);
+    if (item == NULL)
+        return false;
+
+    item->price = ParseFloat(data[delivery_index + 1]);
     item->quantity = 1.0;
 
     char *delivery = "Delivery";
 
     item->description = (char *)malloc((1 + StringLength(delivery)) * sizeof(char));
+    if (item->description == NULL)
+    {
+        free(item);
+        return false;
+    }
+
     for (int j = 0; delivery[j] != '\0'; j++)
         item->description[j] = delivery[j];
 
-    (*receipt)->items[*num_items] = item;
-    *num_items += 1;
+    int item_index = 0;
+    while ((*items_buf)[item_index] != NULL)
+        item_index += 1;
+
+    (*items_buf)[item_index] = item;
 
     return true;
 }
 
-bool MakeReceipt(char ***receipt_data, Receipt **receipt)
+Receipt *MakeReceipt(char **data)
 {
     printf("[LOG] - Entered MakeReceipt()\n");
 
-    int num_items = 0;
+    Item **items_buf[MAX_ITEMS];
 
-    ExtractSubstitutions(receipt_data, receipt, &num_items);
+    if(!ExtractSubstitutions(data, &items_buf))
+    {
+        FreeItems(items_buf);
+        return NULL;
+    }
 
-    ExtractRestOfItems(receipt_data, receipt, &num_items);
+    if(!ExtractRestOfItems(data, &items_buf)){
+        FreeItems(items_buf);
+        return NULL;
+    }
 
-    AddDelivery(receipt_data, receipt, &num_items);
+    if(!AddDelivery(data, &items_buf))
+    {
+        FreeItems(items_buf);
+        return NULL;
+    }
 
-    (*receipt)->count = (double) num_items;
-    for (int i = 0; (*receipt)->items[i] != NULL; i++)
-        (*receipt)->total += (*receipt)->items[i]->price;
+    int items_buf_length = 0;
+    while (items_buf[items_buf_length] != NULL)
+        items_buf_length += 1;
+
+    Item **items = (Item **)malloc((1 + items_buf_length) * sizeof(Item *));
+    if (items == NULL)
+    {
+        FreeItems(items_buf);
+        return NULL;
+    }
+
+    for (int i = 0; items_buf[i] != NULL; i++)
+        items[i] = items_buf[i];
+
+    Receipt *receipt;
+    receipt->items = items;
+    receipt->count = 0.0;
+    for (int i = 0; receipt->items[i] != NULL; i++)
+    {
+        receipt->count += 1.0;
+        receipt->total += receipt->items[i]->price;
+    }
 
     printf("[LOG] - Leaving MakeReceipt()\n");
-    return true;
+    return receipt;
 }
 
-bool LoadReceipt(const char *path, Receipt *receipt)
+Receipt *LoadReceipt(char *path)
 {
     printf("[LOG] - Entered LoadReceipt()\n");
-    char **receipt_data;
 
-    // Read the raw data from the email into receipt_data
-    if (!ReadData(&receipt_data, path))
+    char **data = ReadDataFromFile(path);
+    if (data == NULL)
+        return NULL;
+
+    if (!CleanData(&data))
     {
-        FreeReceiptData(&receipt_data);
-        return false;
+        FreeData(data);
+        return NULL;
     }
 
-    // Clean the raw data
-    if(!CleanData(&receipt_data))
+    Receipt *receipt = MakeReceipt(data);
+    if (receipt == NULL)
     {
-        FreeReceiptData(&receipt_data);
-        return false;
+        FreeData(data);
+        return NULL;
     }
 
-    // Make a receipt object out of the cleaned data
-    if(!MakeReceipt(&receipt_data, &receipt))
-    {
-        FreeReceiptData(&receipt_data);
-        return false;
-    }
-
-    //for (size_t i = 0; receipt_data[i] != NULL; i++)
-    //  printf("%s\n", receipt_data[i]);
-
-    // free receipt_data as no longer needed
-    FreeReceiptData(&receipt_data);
-
-    return true;
+    FreeData(data);
+    return receipt;
 }
