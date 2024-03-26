@@ -4,6 +4,9 @@
 
 #include <Models.h>
 #include <StringFunctions.h>
+#include <UserInput.h>
+
+#define MAX_PERSON_ITEMS 128
 
 void AppendItem(Item ***items, Item *item)
 {
@@ -12,8 +15,6 @@ void AppendItem(Item ***items, Item *item)
         length_items += 1;
 
     Item **new_items = (Item **)malloc((1 + length_items) * sizeof(Item));
-
-    
 }
 
 bool AddItemToPersonsReceipt(Item *item, double share, char *splitee, Person ***people)
@@ -45,7 +46,7 @@ bool SpliteesAreValid(char **splitees, Person **people)
     {
         for (int j = 0; people[j] != NULL; j++)
         {
-            if (splitees[i] == people[j])
+            if (StringEquals(splitees[i], people[j]->name))
             {
                 splitee_found[i] = true;
                 break;

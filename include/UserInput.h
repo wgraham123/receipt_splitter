@@ -4,5 +4,6 @@
 #define __USER_INPUT
 
 Person **GatherNamesFromUser();
+char **GetSpliteesFromUser();
 
 #endif

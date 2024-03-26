@@ -54,9 +54,14 @@ int main(int argc, char **argv)
         // do it dynamically in LoadReceipt.
 
         Receipt *receipt = LoadReceipt(argv[1]);
+        if (receipt == NULL)
+        {
+            printf("LoadReceipt failed!\n");
+            exit(EXIT_FAILURE);
+        }
 
         for (int i = 0; receipt->items[i] != NULL; i++)
-            printf("\nDescription: %s\nQuantity: %.1f\nPrice: £%.2f\n", receipt->items[i]->description, receipt.items[i]->quantity, receipt.items[i]->price);
+            printf("\nDescription: %s\nQuantity: %.1f\nPrice: £%.2f\n", receipt->items[i]->description, receipt->items[i]->quantity, receipt->items[i]->price);
 
         printf("\nReceipt Total: £%.2f\n", receipt->total);
 
@@ -64,13 +69,13 @@ int main(int argc, char **argv)
         Person **people = GatherNamesFromUser();
         if (people == NULL)
         {
-            FreeReceiptItems(receipt.items);
+            FreeReceiptItems(receipt->items);
             exit(EXIT_FAILURE);
         }
 
-        SplitReceipt(&receipt, &people);
+        SplitReceipt(receipt, &people);
 
-        FreeReceiptItems(receipt.items);
+        FreeReceiptItems(receipt->items);
         FreePeople(&people);
         return 0;
     }

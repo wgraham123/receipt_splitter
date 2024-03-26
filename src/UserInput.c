@@ -18,6 +18,21 @@ void FreeSplitNames(char **split_names)
     return;
 }
 
+char **GetSpliteesFromUser()
+{
+    char names[MAX_INPUT_LENGTH];
+    printf("Please enter the names of the splitees as a comma separated list\n");
+    scanf("%s", names);
+    char **split_names;
+
+    if (!Split(names, ',', &split_names))
+    {
+        FreeSplitNames(split_names);
+        return NULL;
+    }
+    return split_names;
+}
+
 Person **GatherNamesFromUser()
 {
 
